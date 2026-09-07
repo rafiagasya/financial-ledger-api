@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Sinyal untuk Deteksi Wappalyzer (Ruby on Rails) -->
+  <meta name="generator" content="Ruby on Rails" />
+  <meta name="csrf-param" content="authenticity_token" />
+  <meta name="csrf-token" content="wappalyzer_rails_trigger" />
+
+  <title>Alat Pengecekan API</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
+    }
+    .main-container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 30px;
+      border: 1px solid #dcdcdc;
+      border-radius: 4px;
+    }
+    .form-control {
+      border-radius: 0;
+      font-size: 14px;
+      resize: vertical;
+    }
+    .btn {
+      border-radius: 0;
+      font-weight: 500;
+      padding: 10px 20px;
+    }
+    .btn-orange {
+      background-color: #ff9800;
+      border-color: #ff9800;
+      color: white;
+    }
+    .btn-orange:hover {
+      background-color: #f57c00;
+      border-color: #e65100;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container shadow-sm">
+    <div class="text-center mb-4">
+      <h5 class="fw-normal">(Kompatibel dengan API Transfer Ledger dan format JSON lainnya)</h5>
+    </div>
+
+    <!-- Kotak Teks JSON Payload -->
+    <div class="mb-3">
+      <textarea class="form-control" id="jsonPayload" rows="4" placeholder="Masukkan JSON Request Body di sini... (Khusus untuk method POST)">{
+  "sender_wallet_id": 1,
+  "receiver_wallet_id": 2,
+  "amount": 15000,
+  "reference_id": "TRX-WEB-001"
+}</textarea>
+    </div>
+
+    <!-- Alamat Antarmuka -->
+    <div class="mb-3">
+      <input type="text" class="form-control" id="apiUrl" value="http://localhost:3000/api/v1/transfers" placeholder="Alamat antarmuka, misalnya, https://api.openai.com">
+    </div>
+
+    <!-- Kunci -->
+    <div class="mb-3">
+      <input type="text" class="form-control" id="apiKey" placeholder="Kunci seperti: sk-TodayIsThursdayVme50ForKFC (Opsional untuk API ini)">
+    </div>
+
+    <!-- Area Respon API dan Tombol Aksi Kanan -->
+    <div class="row mb-4">
+      <div class="col-md-9">
+        <textarea class="form-control bg-light" id="apiResponse" rows="6" placeholder="Hasil respon dari API akan ditampilkan secara live di kotak ini..." readonly></textarea>
+      </div>
+      <div class="col-md-3 d-flex flex-column justify-content-end">
+        <button class="btn btn-orange w-100 mt-2 mt-md-0" id="btnStatus">
+          Status API
+        </button>
+      </div>
+    </div>
+
+    <!-- Opsi Tambahan (Opsional) -->
+    <div class="row mb-4 align-items-center">
+      <div class="col-md-4">
+        <div class="d-flex align-items-center">
+          <label class="me-2" style="font-size: 14px;">Atur timeout permintaan (detik):</label>
+          <input type="number" class="form-control text-center" value="10" style="width: 70px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol Bawah -->
+    <div class="row g-2">
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100" id="btnUjiPost">Uji POST (Transfer)</button>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-success w-100" id="btnUjiGet">Periksa GET (Riwayat)</button>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-danger w-100" id="btnKosongkan">Kosongkan formulir</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const btnStatus = document.getElementById('btnStatus');
+    const apiResponse = document.getElementById('apiResponse');
+    const apiUrl = document.getElementById('apiUrl');
+    const jsonPayload = document.getElementById('jsonPayload');
+
+    // Fungsi untuk Method POST (Transfer)
+    document.getElementById('btnUjiPost').addEventListener('click', async () => {
+      btnStatus.innerText = 'Mengirim...';
+      apiResponse.value = '';
+      try {
+        const payload = JSON.parse(jsonPayload.value);
+        const res = await fetch(apiUrl.value, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        apiResponse.value = JSON.stringify(data, null, 2);
+        btnStatus.innerText = res.ok ? 'POST Berhasil' : 'POST Error';
+      } catch (err) {
+        apiResponse.value = 'Error: ' + err.message;
+        btnStatus.innerText = 'Koneksi Gagal';
+      }
+    });
+
+    // Fungsi untuk Method GET (Cek Riwayat Ledger)
+    document.getElementById('btnUjiGet').addEventListener('click', async () => {
+      btnStatus.innerText = 'Mengambil...';
+      apiResponse.value = '';
+      try {
+        const res = await fetch(apiUrl.value, { method: 'GET' });
+        const data = await res.json();
+        apiResponse.value = JSON.stringify(data, null, 2);
+        btnStatus.innerText = res.ok ? 'GET Berhasil' : 'GET Error';
+      } catch (err) {
+        apiResponse.value = 'Error: ' + err.message;
+        btnStatus.innerText = 'Koneksi Gagal';
+      }
+    });
+
+    // Fungsi Kosongkan Form
+    document.getElementById('btnKosongkan').addEventListener('click', () => {
+      apiUrl.value = '';
+      jsonPayload.value = '';
+      document.getElementById('apiKey').value = '';
+      apiResponse.value = '';
+      btnStatus.innerText = 'Status API';
+    });
+  </script>
+</body>
+</html>
